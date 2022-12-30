@@ -1,13 +1,17 @@
-import SearchIcon from "@mui/icons-material/Search";
 import PersonIcon from "@mui/icons-material/Person";
+import SearchIcon from "@mui/icons-material/Search";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
 import Typography from "@mui/material/Typography";
 import _ from "lodash";
-import React, { useEffect, useState } from "react";
+import React, { useReducer, useState } from "react";
+import appReducer, { init } from "./appReducer";
 import Board from "./Board";
 import Teams from "./Teams";
-import allWords from "./words.json";
 
 export type TTeam = "red" | "blue";
 export type TRole = "guesser" | "spymaster";
@@ -23,42 +27,22 @@ export interface IPlayer {
   nickname: string;
   role: TRole;
 }
+export interface AppState {
+  cards: ICard[];
+  players: IPlayer[];
+  turn: TTeam;
+  winner: TTeam | undefined;
+}
 
 function App() {
   const clientId = generateClientId();
-  // not sure how this switches between games but making it a variable so it's
-  // easy to change later
-  const isRedFirst = true;
-  const getNewCards = () => {
-    let shuffled = _.shuffle(allWords);
-    const numRedCards = isRedFirst ? 9 : 8;
-    const redWords = _.take(shuffled, numRedCards);
-    shuffled = _.drop(shuffled, numRedCards);
-    const numBlueCards = isRedFirst ? 8 : 9;
-    const blueWords = _.take(shuffled, numBlueCards);
-    shuffled = _.drop(shuffled, numBlueCards);
-    const neutralWords = _.take(shuffled, 7);
-    shuffled = _.drop(shuffled, 7);
-    const bombWords = [shuffled[0]];
-    const teamOrder = ["red", "blue", "none", "bomb"] as const;
-    const cards = [redWords, blueWords, neutralWords, bombWords].flatMap(
-      (wordList, index) =>
-        wordList.map((word) => ({
-          team: teamOrder[index],
-          title: word,
-          revealed: false,
-        }))
-    );
-    return _.shuffle(cards);
-  };
-  const [cards, setCards] = useState<ICard[]>(getNewCards);
-  const [players, setPlayers] = useState<IPlayer[]>(() => [
-    { id: clientId, team: "red", nickname: "Player 1", role: "guesser" },
-    { id: "123", team: "blue", nickname: "Player 2", role: "guesser" },
-    { id: "456", team: "red", nickname: "Player 3", role: "guesser" },
-  ]);
-  const [turn, setTurn] = useState<TTeam>("red");
-  const [winner, setWinner] = useState<TTeam | undefined>();
+  const [appState, dispatch] = useReducer(
+    appReducer,
+    [{ id: clientId, nickname: "Player 1", role: "guesser", team: "red" }],
+    init
+  );
+  const { cards, players, turn, winner } = appState;
+  const [showDialog, setShowDialog] = useState(false);
 
   const currentPlayer = players.filter(({ id }) => id === clientId)[0];
   const isYourTurn = currentPlayer.team === turn;
@@ -71,49 +55,12 @@ function App() {
     0
   );
 
-  useEffect(() => {
-    if (remainingRed === 0) setWinner("red");
-    else if (remainingBlue === 0) setWinner("blue");
-  }, [remainingRed, remainingBlue]);
-
-  const handleCardClick = (index: number) => {
-    if (winner || currentPlayer.team !== turn || currentPlayer.role === "spymaster")
-      return;
-    const newCards = [...cards];
-    newCards[index] = { ...cards[index], revealed: true };
-    setCards(newCards);
-    if (cards[index].team === "bomb") setWinner(turn === "red" ? "blue" : "red");
-  };
-  const endTurn = () => {
-    if (winner) return;
-    setTurn(turn === "red" ? "blue" : "red");
-  };
-
-  const handleJoinTeam = (team: TTeam) => {
-    if (team === currentPlayer.team) return;
-    const newPlayers = players.filter(({ id }) => id !== clientId);
-    const newPlayer = { ...currentPlayer, team };
-    newPlayers.push(newPlayer);
-    setPlayers(newPlayers);
-  };
-  const handleRandomizeTeams = () => {
-    const shuffledPlayers = _.shuffle(players);
-    const half = Math.ceil(players.length / 2);
-    const newPlayers = shuffledPlayers.map<IPlayer>((player, index) => ({
-      ...player,
-      team: index < half ? "red" : "blue",
-    }));
-    setPlayers(newPlayers);
-  };
   const handleChangePlayer = (newValues: Partial<IPlayer>) => {
-    const newPlayers = [...players];
-    const currentIndex = players.findIndex(({ id }) => id === clientId);
-    newPlayers[currentIndex] = { ...currentPlayer, ...newValues };
-    setPlayers(newPlayers);
+    dispatch({ type: "changePlayer", payload: { newValues, currentPlayer } });
   };
 
   return (
-    <div style={{ margin: "24px 48px", display: "flex", gap: 8 }}>
+    <div style={{ padding: "24px 48px", display: "flex", gap: 8 }}>
       <div
         style={{
           display: "flex",
@@ -128,8 +75,10 @@ function App() {
         <Teams
           players={players}
           clientId={clientId}
-          onJoinTeam={handleJoinTeam}
-          onRandomizeTeams={handleRandomizeTeams}
+          onJoinTeam={(team) =>
+            dispatch({ type: "joinTeam", payload: { team, currentPlayer } })
+          }
+          onRandomizeTeams={() => dispatch({ type: "randomizeTeams" })}
           onChangeNickname={(newName) => handleChangePlayer({ nickname: newName })}
         />
       </div>
@@ -172,7 +121,7 @@ function App() {
                 fontSize: 12,
                 borderRadius: "2px",
               }}
-              onClick={endTurn}
+              onClick={() => dispatch({ type: "endTurn" })}
               disabled={!isYourTurn}
             >
               End Turn
@@ -183,7 +132,9 @@ function App() {
           cards={cards}
           role={currentPlayer.role}
           hasWinner={!!winner}
-          onClick={handleCardClick}
+          onClick={(index) =>
+            dispatch({ type: "clickCard", payload: { index, currentPlayer } })
+          }
         />
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
           <ButtonGroup size="small" sx={{ button: { fontWeight: "500" } }}>
@@ -204,9 +155,36 @@ function App() {
               Spymaster
             </Button>
           </ButtonGroup>
+          <Dialog
+            open={showDialog}
+            onClose={() => setShowDialog(false)}
+            sx={{ "& .MuiPaper-root": { maxWidth: 400 } }}
+          >
+            <DialogContent>
+              <DialogContentText>
+                Are you sure you want to start a new game? The game currently in progress
+                will be overridden.
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setShowDialog(false)}>Cancel</Button>
+              <Button
+                onClick={() => {
+                  setShowDialog(false);
+                  dispatch({ type: "reset" });
+                }}
+              >
+                Start New Game
+              </Button>
+            </DialogActions>
+          </Dialog>
           <Button
             variant={winner ? "contained" : "outlined"}
             color={winner ? "success" : "error"}
+            onClick={() => {
+              if (winner) dispatch({ type: "reset" });
+              else setShowDialog(true);
+            }}
           >
             New Game
           </Button>
