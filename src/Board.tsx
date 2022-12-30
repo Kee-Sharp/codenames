@@ -1,36 +1,51 @@
 import _ from "lodash";
 import Card from "@mui/material/Card";
-import { ICard } from "./App";
+import { ICard, TRole } from "./App";
 
 interface BoardProps {
   cards: ICard[];
+  role: TRole;
+  hasWinner: boolean;
   onClick: (index: number) => void;
 }
 
-const Board = ({ cards, onClick }: BoardProps) => {
+const Board = ({ cards, role, hasWinner, onClick }: BoardProps) => {
   const rows = _.chunk(cards, 5);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       {rows.map((row, rowIndex) => (
         <div key={rowIndex} style={{ display: "flex", gap: 8 }}>
           {row.map(({ team, title, revealed }, index) => {
-            let backgroundColor;
-            let color = "white";
+            /** [revealed color, spymaster color] */
+            let backgroundColors: [string, string];
+            /** [revealed color, spymaster color] */
+            let colors: [string, string];
             switch (team) {
               case "blue":
-                backgroundColor = "primary.dark";
+                backgroundColors = ["primary.dark", "#81c3f9"];
+                colors = ["white", "primary.dark"];
                 break;
               case "red":
-                backgroundColor = "error.dark";
+                backgroundColors = ["error.dark", "#f48885"];
+                colors = ["white", "error.dark"];
                 break;
               case "bomb":
-                backgroundColor = "black";
+                backgroundColors = ["black", "grey.700"];
+                colors = ["white", "black"];
                 break;
               default:
-                backgroundColor = "grey.400";
+                backgroundColors = ["grey.400", "white"];
+                colors = ["white", "black"];
                 break;
             }
-            if (!revealed) {
+            let backgroundColor, color;
+            if (revealed) {
+              backgroundColor = backgroundColors[0];
+              color = colors[0];
+            } else if (role === "spymaster" || hasWinner) {
+              backgroundColor = backgroundColors[1];
+              color = colors[1];
+            } else {
               backgroundColor = "white";
               color = "black";
             }
