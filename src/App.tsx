@@ -8,8 +8,8 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import Typography from "@mui/material/Typography";
 import _ from "lodash";
-import React, { useReducer, useState } from "react";
-import appReducer, { init } from "./appReducer";
+import React, { useState } from "react";
+import type { Payloads } from "./appReducer";
 import Board from "./Board";
 import Teams from "./Teams";
 
@@ -31,20 +31,20 @@ export interface AppState {
   cards: ICard[];
   players: IPlayer[];
   turn: TTeam;
-  winner: TTeam | undefined;
+  winner: TTeam | "";
+}
+interface AppProps {
+  clientId: string;
+  roomState: AppState;
+  dispatch: (payload: Payloads) => void;
+  onClose: () => void;
 }
 
-function App() {
-  const clientId = generateClientId();
-  const [appState, dispatch] = useReducer(
-    appReducer,
-    [{ id: clientId, nickname: "Player 1", role: "guesser", team: "red" }],
-    init
-  );
-  const { cards, players, turn, winner } = appState;
+function App({ clientId, roomState, dispatch }: AppProps) {
+  const { cards, players, turn, winner } = roomState;
   const [showDialog, setShowDialog] = useState(false);
 
-  const currentPlayer = players.filter(({ id }) => id === clientId)[0];
+  const currentPlayer = players.filter(({ id }) => id === clientId)[0] ?? {};
   const isYourTurn = currentPlayer.team === turn;
   const remainingRed = cards.reduce(
     (total, { team, revealed }) => (team === "red" && !revealed ? total + 1 : total),
@@ -193,16 +193,5 @@ function App() {
     </div>
   );
 }
-
-const generateClientId = () => {
-  // Check if the client ID is already stored in sessionStorage
-  const clientId = sessionStorage.getItem("clientId");
-  if (clientId) return clientId;
-  // Generate a new client ID
-  const newClientId = "client_" + Math.random().toString(36).substring(2, 15);
-  // Store the client ID in sessionStorage
-  sessionStorage.setItem("clientId", newClientId);
-  return newClientId;
-};
 
 export default App;

@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Reducer } from "react";
-import { AppState, IPlayer, TTeam } from "./App";
+import type { AppState, IPlayer, TTeam } from "./App";
 import allWords from "./words.json";
 
 export const init = (players: IPlayer[]): AppState => {
@@ -30,7 +30,7 @@ export const init = (players: IPlayer[]): AppState => {
     cards: _.shuffle(cards),
     players,
     turn: "red",
-    winner: undefined,
+    winner: "",
   };
 };
 
@@ -52,11 +52,11 @@ type AdministrativePayloads =
       { newValues: Partial<IPlayer>; currentPlayer: IPlayer }
     >;
 
-type Payloads = GameplayPayloads | AdministrativePayloads;
+export type Payloads = GameplayPayloads | AdministrativePayloads;
 const reducer: Reducer<AppState, Payloads> = (state, action) => {
   switch (action.type) {
     case "addPlayer": {
-      const { players } = state;
+      const { players = [] } = state;
       const newPlayers = [...players];
       const [reds, blues] = players.reduce(
         ([prevRed, prevBlue], { team }) =>

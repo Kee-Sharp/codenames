@@ -5,9 +5,9 @@ import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
-import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import FirebaseWrapper from "./FirebaseWrapper";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 const theme = createTheme({
@@ -20,7 +20,7 @@ const theme = createTheme({
 root.render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
-      <App />
+      <FirebaseWrapper />
     </ThemeProvider>
   </React.StrictMode>
 );

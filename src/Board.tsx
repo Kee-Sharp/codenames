@@ -4,9 +4,9 @@ import { ICard, TRole } from "./App";
 
 interface BoardProps {
   cards: ICard[];
-  role: TRole;
-  hasWinner: boolean;
-  onClick: (index: number) => void;
+  role?: TRole;
+  hasWinner?: boolean;
+  onClick?: (index: number) => void;
 }
 
 const Board = ({ cards, role, hasWinner, onClick }: BoardProps) => {
@@ -64,7 +64,7 @@ const Board = ({ cards, role, hasWinner, onClick }: BoardProps) => {
                   fontWeight: "medium",
                   "&:hover": { opacity: "90%" },
                 }}
-                onClick={() => onClick(rowIndex * 5 + index)}
+                onClick={() => onClick?.(rowIndex * 5 + index)}
               >
                 {title.toUpperCase()}
               </Card>
