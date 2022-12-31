@@ -12,7 +12,7 @@ import {
   remove,
   runTransaction,
 } from "firebase/database";
-import React, { useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import App, { AppState } from "./App";
 import appReducer, { init, Payloads } from "./appReducer";
 import Board from "./Board";
@@ -41,6 +41,22 @@ const FirebaseWrapper = () => {
   const unsubscribeRef = useRef<Function | null>(null);
   const clientId = generateClientId();
 
+  useLayoutEffect(() => {
+    const roomsRef = child(dbRef, "rooms");
+    get(roomsRef).then((snapshot) => {
+      const rooms = (snapshot.val() ?? {}) as Record<string, AppState>;
+      for (let [key, room] of Object.entries(rooms)) {
+        const { players = [] } = room;
+        if (players.find(({ id }) => id === clientId)) {
+          setRoomId(key);
+          joinRoom(key, true);
+          break;
+        }
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const createRoom = async () => {
     const newRoomKey = push(child(dbRef, "rooms"), init([])).key;
     if (!newRoomKey) return;
@@ -48,7 +64,7 @@ const FirebaseWrapper = () => {
     joinRoom(newRoomKey);
   };
 
-  const joinRoom = async (key: string) => {
+  const joinRoom = async (key: string, alreadyInRoom = false) => {
     const roomRef = child(dbRef, `rooms/${key}`);
     const roomSnapshot = await get(roomRef);
     const room = roomSnapshot.val() as AppState | null;
@@ -56,14 +72,16 @@ const FirebaseWrapper = () => {
       setIdError(true);
       return;
     }
-    let newState;
-    await runTransaction(roomRef, (prevState: AppState | null) => {
-      if (!prevState) return prevState;
-      newState = appReducer(room, { type: "addPlayer", payload: clientId });
-      return newState;
-    });
+    let newState = room;
+    if (!alreadyInRoom) {
+      await runTransaction(roomRef, (prevState: AppState | null) => {
+        if (!prevState) return prevState;
+        newState = appReducer(room, { type: "addPlayer", payload: clientId });
+        return newState;
+      });
+    }
     // set initial values even though they will be updated by the listener immediately
-    setRoomState(newState ?? room);
+    setRoomState(newState);
     const unsubscribe = onValue(roomRef, (snapshot) => {
       const data = snapshot.val() as AppState | null;
       setRoomState(data ?? init([]));

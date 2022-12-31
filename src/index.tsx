@@ -18,11 +18,9 @@ const theme = createTheme({
   },
 });
 root.render(
-  <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <FirebaseWrapper />
-    </ThemeProvider>
-  </React.StrictMode>
+  <ThemeProvider theme={theme}>
+    <FirebaseWrapper />
+  </ThemeProvider>
 );
 
 // If you want to start measuring performance in your app, pass a function
