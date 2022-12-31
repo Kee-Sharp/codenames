@@ -9,6 +9,7 @@ import {
   onValue,
   push,
   ref,
+  remove,
   runTransaction,
 } from "firebase/database";
 import React, { useRef, useState } from "react";
@@ -72,15 +73,19 @@ const FirebaseWrapper = () => {
     setShowInput(false);
   };
 
-  const dispatch = (payload: Payloads) => {
+  const dispatch = async (payload: Payloads) => {
     const roomRef = child(dbRef, `rooms/${roomId}`);
-    runTransaction(roomRef, (previousState: AppState | null) => {
+    await runTransaction(roomRef, (previousState: AppState | null) => {
       if (!previousState) return previousState;
       return appReducer(previousState, payload);
     });
   };
 
   const cleanup = async () => {
+    const roomRef = child(dbRef, `rooms/${roomId}`);
+    const roomSnapshot = await get(roomRef);
+    const room = roomSnapshot.val() as AppState | null;
+    if (!room?.players?.length) remove(roomRef);
     setRoomId("");
     setHasJoinedRoom(false);
     unsubscribeRef.current?.();
@@ -89,9 +94,10 @@ const FirebaseWrapper = () => {
   return hasJoinedRoom ? (
     <App
       clientId={clientId}
+      roomId={roomId}
       roomState={roomState}
       dispatch={dispatch}
-      onClose={cleanup}
+      onLeave={cleanup}
     />
   ) : (
     <div style={{ padding: "24px 48px" }}>

@@ -1,3 +1,5 @@
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import LinkIcon from "@mui/icons-material/Link";
 import PersonIcon from "@mui/icons-material/Person";
 import SearchIcon from "@mui/icons-material/Search";
 import Button from "@mui/material/Button";
@@ -35,13 +37,14 @@ export interface AppState {
 }
 interface AppProps {
   clientId: string;
+  roomId: string;
   roomState: AppState;
-  dispatch: (payload: Payloads) => void;
-  onClose: () => void;
+  dispatch: (payload: Payloads) => Promise<void>;
+  onLeave: () => void;
 }
 
-function App({ clientId, roomState, dispatch }: AppProps) {
-  const { cards, players, turn, winner } = roomState;
+function App({ clientId, roomId, roomState, dispatch, onLeave }: AppProps) {
+  const { cards, players = [], turn, winner } = roomState;
   const [showDialog, setShowDialog] = useState(false);
 
   const currentPlayer = players.filter(({ id }) => id === clientId)[0] ?? {};
@@ -60,134 +63,158 @@ function App({ clientId, roomState, dispatch }: AppProps) {
   };
 
   return (
-    <div style={{ padding: "24px 48px", display: "flex", gap: 8 }}>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Typography color="white" fontWeight="bold">
-          Teams
-        </Typography>
-        <Teams
-          players={players}
-          clientId={clientId}
-          onJoinTeam={(team) =>
-            dispatch({ type: "joinTeam", payload: { team, currentPlayer } })
-          }
-          onRandomizeTeams={() => dispatch({ type: "randomizeTeams" })}
-          onChangeNickname={(newName) => handleChangePlayer({ nickname: newName })}
-        />
-      </div>
-      <div>
-        {/* Top Info Section */}
-        <div style={{ display: "flex", marginBottom: 16 }}>
-          <div style={{ display: "flex", flex: 1, alignItems: "center" }}>
-            <Typography color="error.light">{remainingRed}</Typography>
-            <Typography color="white" marginLeft="7px" marginRight="6px">
-              -
-            </Typography>
-            <Typography color="primary.light">{remainingBlue}</Typography>
-          </div>
-          <Typography
-            sx={{
-              flex: 1,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              color: `${
-                (turn === "red" && winner !== "blue") || winner === "red"
-                  ? "error"
-                  : "primary"
-              }.main`,
-              fontWeight: "bold",
-            }}
-          >
-            {winner
-              ? `${_.capitalize(winner)} wins!`
-              : `${isYourTurn ? "Your" : _.capitalize(turn)}${
-                  isYourTurn ? "" : "'s"
-                } turn`}
+    <div>
+      <header style={{ padding: "8px 0px 0px 8px" }}>
+        <Button
+          color="secondary"
+          startIcon={<ArrowBackIcon />}
+          onClick={async () => {
+            await dispatch({ type: "removePlayer", payload: clientId });
+            onLeave();
+          }}
+        >
+          Leave
+        </Button>
+        <Button
+          color="secondary"
+          startIcon={<LinkIcon />}
+          onClick={() => navigator.clipboard.writeText(roomId)}
+        >
+          Copy Room ID
+        </Button>
+      </header>
+
+      <div style={{ padding: "20px 48px", display: "flex", gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Typography color="white" fontWeight="bold">
+            Teams
           </Typography>
-          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-            <Button
-              variant="outlined"
-              color="secondary"
+          <Teams
+            players={players}
+            clientId={clientId}
+            onJoinTeam={(team) =>
+              dispatch({ type: "joinTeam", payload: { team, currentPlayer } })
+            }
+            onRandomizeTeams={() => dispatch({ type: "randomizeTeams" })}
+            onChangeNickname={(newName) => handleChangePlayer({ nickname: newName })}
+          />
+        </div>
+        <div>
+          {/* Top Info Section */}
+          <div style={{ display: "flex", marginBottom: 16 }}>
+            <div style={{ display: "flex", flex: 1, alignItems: "center" }}>
+              <Typography color="error.light">{remainingRed}</Typography>
+              <Typography color="white" marginLeft="7px" marginRight="6px">
+                -
+              </Typography>
+              <Typography color="primary.light">{remainingBlue}</Typography>
+            </div>
+            <Typography
               sx={{
+                flex: 1,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                color: `${
+                  (turn === "red" && winner !== "blue") || winner === "red"
+                    ? "error"
+                    : "primary"
+                }.main`,
                 fontWeight: "bold",
-                fontSize: 12,
-                borderRadius: "2px",
               }}
-              onClick={() => dispatch({ type: "endTurn" })}
-              disabled={!isYourTurn}
             >
-              End Turn
+              {winner
+                ? `${_.capitalize(winner)} wins!`
+                : `${isYourTurn ? "Your" : _.capitalize(turn)}${
+                    isYourTurn ? "" : "'s"
+                  } turn`}
+            </Typography>
+            <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                variant="outlined"
+                color="secondary"
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: 12,
+                  borderRadius: "2px",
+                }}
+                onClick={() => dispatch({ type: "endTurn" })}
+                disabled={!isYourTurn}
+              >
+                End Turn
+              </Button>
+            </div>
+          </div>
+          <Board
+            cards={cards}
+            role={currentPlayer.role}
+            hasWinner={!!winner}
+            onClick={(index) =>
+              dispatch({ type: "clickCard", payload: { index, currentPlayer } })
+            }
+          />
+          <div
+            style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}
+          >
+            <ButtonGroup size="small" sx={{ button: { fontWeight: "500" } }}>
+              <Button
+                startIcon={<SearchIcon />}
+                color="secondary"
+                variant={currentPlayer.role === "guesser" ? "contained" : "outlined"}
+                onClick={() => handleChangePlayer({ role: "guesser" })}
+              >
+                Guesser
+              </Button>
+              <Button
+                startIcon={<PersonIcon />}
+                color="secondary"
+                variant={currentPlayer.role === "spymaster" ? "contained" : "outlined"}
+                onClick={() => handleChangePlayer({ role: "spymaster" })}
+              >
+                Spymaster
+              </Button>
+            </ButtonGroup>
+            <Dialog
+              open={showDialog}
+              onClose={() => setShowDialog(false)}
+              sx={{ "& .MuiPaper-root": { maxWidth: 400 } }}
+            >
+              <DialogContent>
+                <DialogContentText>
+                  Are you sure you want to start a new game? The game currently in
+                  progress will be overridden.
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setShowDialog(false)}>Cancel</Button>
+                <Button
+                  onClick={() => {
+                    setShowDialog(false);
+                    dispatch({ type: "reset" });
+                  }}
+                >
+                  Start New Game
+                </Button>
+              </DialogActions>
+            </Dialog>
+            <Button
+              variant={winner ? "contained" : "outlined"}
+              color={winner ? "success" : "error"}
+              onClick={() => {
+                if (winner) dispatch({ type: "reset" });
+                else setShowDialog(true);
+              }}
+            >
+              New Game
             </Button>
           </div>
-        </div>
-        <Board
-          cards={cards}
-          role={currentPlayer.role}
-          hasWinner={!!winner}
-          onClick={(index) =>
-            dispatch({ type: "clickCard", payload: { index, currentPlayer } })
-          }
-        />
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
-          <ButtonGroup size="small" sx={{ button: { fontWeight: "500" } }}>
-            <Button
-              startIcon={<SearchIcon />}
-              color="secondary"
-              variant={currentPlayer.role === "guesser" ? "contained" : "outlined"}
-              onClick={() => handleChangePlayer({ role: "guesser" })}
-            >
-              Guesser
-            </Button>
-            <Button
-              startIcon={<PersonIcon />}
-              color="secondary"
-              variant={currentPlayer.role === "spymaster" ? "contained" : "outlined"}
-              onClick={() => handleChangePlayer({ role: "spymaster" })}
-            >
-              Spymaster
-            </Button>
-          </ButtonGroup>
-          <Dialog
-            open={showDialog}
-            onClose={() => setShowDialog(false)}
-            sx={{ "& .MuiPaper-root": { maxWidth: 400 } }}
-          >
-            <DialogContent>
-              <DialogContentText>
-                Are you sure you want to start a new game? The game currently in progress
-                will be overridden.
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setShowDialog(false)}>Cancel</Button>
-              <Button
-                onClick={() => {
-                  setShowDialog(false);
-                  dispatch({ type: "reset" });
-                }}
-              >
-                Start New Game
-              </Button>
-            </DialogActions>
-          </Dialog>
-          <Button
-            variant={winner ? "contained" : "outlined"}
-            color={winner ? "success" : "error"}
-            onClick={() => {
-              if (winner) dispatch({ type: "reset" });
-              else setShowDialog(true);
-            }}
-          >
-            New Game
-          </Button>
         </div>
       </div>
     </div>

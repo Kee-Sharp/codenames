@@ -47,10 +47,8 @@ type AdministrativePayloads =
   | PayloadAction<"addPlayer", string>
   | PayloadAction<"joinTeam", { team: TTeam; currentPlayer: IPlayer }>
   | PayloadAction<"randomizeTeams">
-  | PayloadAction<
-      "changePlayer",
-      { newValues: Partial<IPlayer>; currentPlayer: IPlayer }
-    >;
+  | PayloadAction<"changePlayer", { newValues: Partial<IPlayer>; currentPlayer: IPlayer }>
+  | PayloadAction<"removePlayer", string>;
 
 export type Payloads = GameplayPayloads | AdministrativePayloads;
 const reducer: Reducer<AppState, Payloads> = (state, action) => {
@@ -122,6 +120,11 @@ const reducer: Reducer<AppState, Payloads> = (state, action) => {
       const newPlayers = [...players];
       const currentIndex = players.findIndex(({ id }) => id === currentPlayer.id);
       newPlayers[currentIndex] = { ...currentPlayer, ...newValues };
+      return { ...state, players: newPlayers };
+    }
+    case "removePlayer": {
+      const { players } = state;
+      const newPlayers = players.filter(({ id }) => id !== action.payload);
       return { ...state, players: newPlayers };
     }
     case "reset": {
