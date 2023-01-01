@@ -10,7 +10,8 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import Typography from "@mui/material/Typography";
 import _ from "lodash";
-import React, { useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router";
 import type { Payloads } from "./appReducer";
 import Board from "./Board";
 import Teams from "./Teams";
@@ -37,15 +38,42 @@ export interface AppState {
 }
 interface AppProps {
   clientId: string;
-  roomId: string;
+  isInRoom: () => Promise<string | undefined>;
+  joinRoom: (key: string, alreadyInRoom?: boolean) => Promise<void>;
   roomState: AppState;
-  dispatch: (payload: Payloads) => Promise<void>;
-  onLeave: () => void;
+  dispatch: (payload: Payloads, roomId: string) => Promise<void>;
+  onLeave: (roomId: string) => void;
 }
 
-function App({ clientId, roomId, roomState, dispatch, onLeave }: AppProps) {
+function App({
+  clientId,
+  isInRoom,
+  joinRoom,
+  roomState,
+  dispatch: dispatchWithRoomId,
+  onLeave,
+}: AppProps) {
   const { cards, players = [], turn, winner } = roomState;
+  const { roomId = "" } = useParams();
+  const dispatch = (payload: Payloads, id = roomId) => dispatchWithRoomId(payload, id);
+  const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
+
+  useLayoutEffect(() => {
+    isInRoom().then((roomAlreadyIn) => {
+      // user is trying to switch rooms
+      if (roomAlreadyIn && roomAlreadyIn !== roomId) {
+        leaveRoom(roomAlreadyIn).then(() => {
+          joinRoom(roomId);
+        });
+      } else if (roomAlreadyIn) {
+        joinRoom(roomAlreadyIn, true);
+      } else {
+        joinRoom(roomId);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId]);
 
   const currentPlayer = players.filter(({ id }) => id === clientId)[0] ?? {};
   const isYourTurn = currentPlayer.team === turn;
@@ -62,15 +90,20 @@ function App({ clientId, roomId, roomState, dispatch, onLeave }: AppProps) {
     dispatch({ type: "changePlayer", payload: { newValues, currentPlayer } });
   };
 
+  const leaveRoom = async (roomToLeave = roomId) => {
+    await dispatch({ type: "removePlayer", payload: clientId }, roomToLeave);
+    onLeave(roomToLeave);
+  };
+
   return (
     <div>
       <header style={{ padding: "8px 0px 0px 8px" }}>
         <Button
           color="secondary"
           startIcon={<ArrowBackIcon />}
-          onClick={async () => {
-            await dispatch({ type: "removePlayer", payload: clientId });
-            onLeave();
+          onClick={() => {
+            leaveRoom();
+            navigate("..");
           }}
         >
           Leave
@@ -78,9 +111,17 @@ function App({ clientId, roomId, roomState, dispatch, onLeave }: AppProps) {
         <Button
           color="secondary"
           startIcon={<LinkIcon />}
-          onClick={() => navigator.clipboard.writeText(roomId)}
+          onClick={() =>
+            navigator.clipboard.writeText(
+              `${
+                process.env.NODE_ENV === "development"
+                  ? "localhost:3000"
+                  : "https://kee-sharp.github.io"
+              }/codenames/${roomId}`
+            )
+          }
         >
-          Copy Room ID
+          Copy Room URL
         </Button>
       </header>
 

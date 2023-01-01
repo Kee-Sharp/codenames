@@ -3,7 +3,7 @@ import Button from "@mui/material/Button";
 import OutlinedInput, { outlinedInputClasses } from "@mui/material/OutlinedInput";
 import Typography from "@mui/material/Typography";
 import { SystemStyleObject, Theme } from "@mui/system";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IPlayer, TTeam } from "./App";
 
 interface TeamsProps {
@@ -30,6 +30,11 @@ const buttonSx: SystemStyleObject<Theme> = {
 const Teams = ({ onRandomizeTeams, onChangeNickname, ...rest }: TeamsProps) => {
   const [isChangingNickname, setIsChangingNickname] = useState(false);
   const [nickname, setNickname] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isChangingNickname) inputRef.current?.focus();
+  }, [isChangingNickname]);
 
   const submitNickname = () => {
     onChangeNickname(nickname);
@@ -56,6 +61,7 @@ const Teams = ({ onRandomizeTeams, onChangeNickname, ...rest }: TeamsProps) => {
         {isChangingNickname ? (
           <>
             <OutlinedInput
+              inputRef={inputRef}
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               onKeyUp={(e) => {

@@ -2,7 +2,7 @@
   "name": "codenames",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://kee-sharp.github.io/codenames",
+  "homepage": "/codenames",
   "dependencies": {
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
@@ -21,6 +21,7 @@
     "lodash": "^4.17.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^6.6.1",
     "react-scripts": "5.0.1",
     "typescript": "^4.4.2",
     "web-vitals": "^2.1.0"

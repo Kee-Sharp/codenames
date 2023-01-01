@@ -8,6 +8,7 @@ import "@fontsource/roboto/700.css";
 import reportWebVitals from "./reportWebVitals";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import FirebaseWrapper from "./FirebaseWrapper";
+import { BrowserRouter } from "react-router-dom";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 const theme = createTheme({
@@ -19,7 +20,9 @@ const theme = createTheme({
 });
 root.render(
   <ThemeProvider theme={theme}>
-    <FirebaseWrapper />
+    <BrowserRouter basename="/codenames">
+      <FirebaseWrapper />
+    </BrowserRouter>
   </ThemeProvider>
 );
 
