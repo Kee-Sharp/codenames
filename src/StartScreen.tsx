@@ -16,6 +16,7 @@ const StartScreen = ({ isInRoom, createRoom }: StartScreenProps) => {
     isInRoom().then((roomAlreadyIn) => {
       if (roomAlreadyIn) navigate(roomAlreadyIn);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
