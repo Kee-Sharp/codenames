@@ -1,6 +1,7 @@
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import OutlinedInput from "@mui/material/OutlinedInput";
+import Typography from "@mui/material/Typography";
 import { initializeApp } from "firebase/app";
 import {
   child,
@@ -118,7 +119,7 @@ const FirebaseWrapper = () => {
       onLeave={cleanup}
     />
   ) : (
-    <div style={{ padding: "24px 48px" }}>
+    <div style={{ padding: "78.5px 48px 24px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <Box
           sx={{
@@ -188,9 +189,18 @@ const FirebaseWrapper = () => {
             </>
           )}
         </Box>
-        <Board
-          cards={[...Array(25)].map(() => ({ team: "none", title: "", revealed: false }))}
-        />
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <Typography fontSize={18} color="secondary.main" marginBottom={1}>
+            Codenames
+          </Typography>
+          <Board
+            cards={[...Array(25)].map(() => ({
+              team: "none",
+              title: "",
+              revealed: false,
+            }))}
+          />
+        </Box>
       </div>
     </div>
   );

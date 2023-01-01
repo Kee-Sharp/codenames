@@ -30,6 +30,12 @@ const buttonSx: SystemStyleObject<Theme> = {
 const Teams = ({ onRandomizeTeams, onChangeNickname, ...rest }: TeamsProps) => {
   const [isChangingNickname, setIsChangingNickname] = useState(false);
   const [nickname, setNickname] = useState("");
+
+  const submitNickname = () => {
+    onChangeNickname(nickname);
+    setNickname("");
+    setIsChangingNickname(false);
+  };
   return (
     <Box
       sx={{
@@ -52,6 +58,9 @@ const Teams = ({ onRandomizeTeams, onChangeNickname, ...rest }: TeamsProps) => {
             <OutlinedInput
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
+              onKeyUp={(e) => {
+                if (e.key === "Enter") submitNickname();
+              }}
               size="small"
               placeholder="Enter new nickname"
               sx={{
@@ -75,11 +84,7 @@ const Teams = ({ onRandomizeTeams, onChangeNickname, ...rest }: TeamsProps) => {
             <Button
               variant="outlined"
               sx={buttonSx}
-              onClick={() => {
-                onChangeNickname(nickname);
-                setNickname("");
-                setIsChangingNickname(false);
-              }}
+              onClick={submitNickname}
               disabled={!nickname}
             >
               Submit
