@@ -64,7 +64,7 @@ const reducer: Reducer<AppState, Payloads> = (state, action) => {
       newPlayers.push({
         id: action.payload,
         nickname: `Player ${players.length + 1}`,
-        team: reds === blues ? "red" : "blue",
+        team: reds <= blues ? "red" : "blue",
         role: "guesser",
       });
       return { ...state, players: newPlayers };

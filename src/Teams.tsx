@@ -1,3 +1,4 @@
+import CloseIcon from "@mui/icons-material/Close";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import OutlinedInput, { outlinedInputClasses } from "@mui/material/OutlinedInput";
@@ -12,6 +13,7 @@ interface TeamsProps {
   onJoinTeam: (team: TTeam) => void;
   onRandomizeTeams: () => void;
   onChangeNickname: (newName: string) => void;
+  removePlayer: (id: string) => void;
 }
 
 const buttonSx: SystemStyleObject<Theme> = {
@@ -122,11 +124,17 @@ const Teams = ({ onRandomizeTeams, onChangeNickname, ...rest }: TeamsProps) => {
 interface TeamProps extends Omit<TeamsProps, "onRandomizeTeams" | "onChangeNickname"> {
   team: TTeam;
 }
-const Team = ({ team, players, clientId, onJoinTeam }: TeamProps) => {
+const Team = ({ team, players, clientId, onJoinTeam, removePlayer }: TeamProps) => {
+  const [showRemoveIcons, setShowRemoveIcons] = useState<boolean[]>([]);
   const teamPlayers = players.filter((player) => player.team === team);
   const colorPrefix = team === "red" ? "error" : "primary";
   return (
-    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <Box
+      sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}
+      onMouseLeave={() => {
+        setShowRemoveIcons([...showRemoveIcons].fill(false));
+      }}
+    >
       <Button
         variant="contained"
         sx={{
@@ -147,9 +155,28 @@ const Team = ({ team, players, clientId, onJoinTeam }: TeamProps) => {
           fontSize={10}
           color={`${colorPrefix}.main`}
           marginTop={0.5}
-          sx={id === clientId ? { fontStyle: "italic" } : undefined}
+          sx={{
+            ...(id === clientId && { fontStyle: "italic" }),
+            display: "flex",
+            alignItems: "center",
+            userSelect: "none",
+          }}
+          onClick={(event) => {
+            if (event.detail >= 2) {
+              const newShowIcons = [...showRemoveIcons];
+              newShowIcons[index] = true;
+              setShowRemoveIcons(newShowIcons);
+            }
+          }}
         >
           {role === "spymaster" ? `[${nickname}]` : nickname}
+          {showRemoveIcons[index] && (
+            <CloseIcon
+              fontSize="inherit"
+              onClick={() => removePlayer(id)}
+              sx={{ marginLeft: 0.5 }}
+            />
+          )}
         </Typography>
       ))}
     </Box>

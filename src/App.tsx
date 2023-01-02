@@ -10,7 +10,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import Typography from "@mui/material/Typography";
 import _ from "lodash";
-import React, { useLayoutEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import type { Payloads } from "./appReducer";
 import Board from "./Board";
@@ -58,6 +58,7 @@ function App({
   const dispatch = (payload: Payloads, id = roomId) => dispatchWithRoomId(payload, id);
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
+  const joinedRef = useRef(false);
 
   useLayoutEffect(() => {
     isInRoom().then((roomAlreadyIn) => {
@@ -71,9 +72,19 @@ function App({
       } else {
         joinRoom(roomId);
       }
+      joinedRef.current = true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
+
+  useEffect(() => {
+    // player has been removed from the lobby
+    if (joinedRef.current && !players.some(({ id }) => id === clientId)) {
+      onLeave(roomId);
+      navigate("..");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(players.map(({ id }) => id))]);
 
   const currentPlayer = players.filter(({ id }) => id === clientId)[0] ?? {};
   const isYourTurn = currentPlayer.team === turn;
@@ -145,6 +156,7 @@ function App({
             }
             onRandomizeTeams={() => dispatch({ type: "randomizeTeams" })}
             onChangeNickname={(newName) => handleChangePlayer({ nickname: newName })}
+            removePlayer={(id) => dispatch({ type: "removePlayer", payload: id })}
           />
         </div>
         <div>
