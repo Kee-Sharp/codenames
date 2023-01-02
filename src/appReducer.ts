@@ -90,11 +90,7 @@ const reducer: Reducer<AppState, Payloads> = (state, action) => {
       if (cardTeam === "bomb") newWinner = turn === "red" ? "blue" : "red";
       else if (remainingRed === 0) newWinner = "red";
       else if (remainingBlue === 0) newWinner = "blue";
-      if (
-        !newWinner &&
-        ["red", "blue"].includes(cardTeam) &&
-        cardTeam !== currentPlayer.team
-      ) {
+      if (!newWinner && cardTeam !== currentPlayer.team) {
         newTurn = turn === "red" ? "blue" : "red";
       }
       return { ...state, cards: newCards, winner: newWinner, turn: newTurn };
