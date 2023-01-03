@@ -2,6 +2,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LinkIcon from "@mui/icons-material/Link";
 import PersonIcon from "@mui/icons-material/Person";
 import SearchIcon from "@mui/icons-material/Search";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Dialog from "@mui/material/Dialog";
@@ -59,6 +60,8 @@ function App({
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
   const joinedRef = useRef(false);
+
+  const isGreaterThan846 = useMediaQuery(`(min-width:846px)`);
 
   useLayoutEffect(() => {
     isInRoom().then((roomAlreadyIn) => {
@@ -136,7 +139,21 @@ function App({
         </Button>
       </header>
 
-      <div style={{ padding: "20px 48px", display: "flex", gap: 8 }}>
+      <div
+        style={{
+          padding: "20px 48px",
+          display: "flex",
+          gap: 8,
+          justifyContent: "center",
+          marginLeft: -200,
+          ...(!isGreaterThan846 && {
+            flexDirection: "column-reverse",
+            gap: 24,
+            alignItems: "center",
+            marginLeft: 0,
+          }),
+        }}
+      >
         <div
           style={{
             display: "flex",
