@@ -2,7 +2,6 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LinkIcon from "@mui/icons-material/Link";
 import PersonIcon from "@mui/icons-material/Person";
 import SearchIcon from "@mui/icons-material/Search";
-import useMediaQuery from "@mui/material/useMediaQuery";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Dialog from "@mui/material/Dialog";
@@ -44,6 +43,7 @@ interface AppProps {
   roomState: AppState;
   dispatch: (payload: Payloads, roomId: string) => Promise<void>;
   onLeave: (roomId: string) => void;
+  bigScreen: boolean;
 }
 
 function App({
@@ -53,6 +53,7 @@ function App({
   roomState,
   dispatch: dispatchWithRoomId,
   onLeave,
+  bigScreen,
 }: AppProps) {
   const { cards, players = [], turn, winner } = roomState;
   const { roomId = "" } = useParams();
@@ -60,8 +61,6 @@ function App({
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
   const joinedRef = useRef(false);
-
-  const isGreaterThan846 = useMediaQuery(`(min-width:846px)`);
 
   useLayoutEffect(() => {
     isInRoom().then((roomAlreadyIn) => {
@@ -146,7 +145,7 @@ function App({
           gap: 8,
           justifyContent: "center",
           marginLeft: -200,
-          ...(!isGreaterThan846 && {
+          ...(!bigScreen && {
             flexDirection: "column-reverse",
             gap: 24,
             alignItems: "center",

@@ -12,11 +12,13 @@ interface BoardProps {
 
 const Board = ({ cards, role, hasWinner, onClick }: BoardProps) => {
   const rows = _.chunk(cards, 5);
-  const bigScreen = useMediaQuery(`(min-width:430px)`);
+  const notSmallScreen = useMediaQuery(`(min-width:430px)`);
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: bigScreen ? 8 : 2 }}>
+    <div
+      style={{ display: "flex", flexDirection: "column", gap: notSmallScreen ? 8 : 2 }}
+    >
       {rows.map((row, rowIndex) => (
-        <div key={rowIndex} style={{ display: "flex", gap: bigScreen ? 8 : 2 }}>
+        <div key={rowIndex} style={{ display: "flex", gap: notSmallScreen ? 8 : 2 }}>
           {row.map(({ team, title, revealed }, index) => {
             /** [revealed color, spymaster color] */
             let backgroundColors: [string, string];
@@ -65,9 +67,10 @@ const Board = ({ cards, role, hasWinner, onClick }: BoardProps) => {
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
+                  textAlign: "center",
                   fontSize: "clamp(0.45rem, 1vw, 1rem)",
                   fontWeight: "medium",
-                  borderRadius: bigScreen ? 1 : 0.5,
+                  borderRadius: notSmallScreen ? 1 : 0.5,
                   "&:hover": { opacity: "90%" },
                 }}
                 onClick={() => onClick?.(rowIndex * 5 + index)}

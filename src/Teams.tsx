@@ -159,6 +159,7 @@ const Team = ({ team, players, clientId, onJoinTeam, removePlayer }: TeamProps) 
             ...(id === clientId && { fontStyle: "italic" }),
             display: "flex",
             alignItems: "center",
+            textAlign: "center",
             userSelect: "none",
           }}
           onClick={(event) => {

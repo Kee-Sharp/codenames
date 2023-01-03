@@ -1,3 +1,4 @@
+import useMediaQuery from "@mui/material/useMediaQuery";
 import { initializeApp } from "firebase/app";
 import {
   child,
@@ -35,6 +36,8 @@ const FirebaseWrapper = () => {
   const navigate = useNavigate();
   const unsubscribeRef = useRef<Function | null>(null);
   const clientId = generateClientId();
+
+  const bigScreen = useMediaQuery(`(min-width:846px)`);
 
   const isInRoom = async () => {
     const roomsRef = child(dbRef, "rooms");
@@ -99,7 +102,13 @@ const FirebaseWrapper = () => {
     <Routes>
       <Route
         path="/"
-        element={<StartScreen isInRoom={isInRoom} createRoom={createRoom} />}
+        element={
+          <StartScreen
+            isInRoom={isInRoom}
+            createRoom={createRoom}
+            bigScreen={bigScreen}
+          />
+        }
       />
       <Route
         path="/:roomId"
@@ -111,6 +120,7 @@ const FirebaseWrapper = () => {
             roomState={roomState}
             dispatch={dispatch}
             onLeave={cleanup}
+            bigScreen={bigScreen}
           />
         }
       />

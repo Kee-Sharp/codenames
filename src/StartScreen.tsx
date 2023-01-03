@@ -8,9 +8,10 @@ import Board from "./Board";
 interface StartScreenProps {
   isInRoom: () => Promise<string | undefined>;
   createRoom: () => Promise<void>;
+  bigScreen: boolean;
 }
 
-const StartScreen = ({ isInRoom, createRoom }: StartScreenProps) => {
+const StartScreen = ({ isInRoom, createRoom, bigScreen }: StartScreenProps) => {
   const navigate = useNavigate();
   useLayoutEffect(() => {
     isInRoom().then((roomAlreadyIn) => {
@@ -21,7 +22,20 @@ const StartScreen = ({ isInRoom, createRoom }: StartScreenProps) => {
 
   return (
     <div style={{ padding: "78.5px 48px 24px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "center",
+          justifyContent: "center",
+          marginLeft: -200,
+          ...(!bigScreen && {
+            flexDirection: "column-reverse",
+            gap: 24,
+            marginLeft: 0,
+          }),
+        }}
+      >
         <Box
           sx={{
             backgroundColor: "grey.800",
