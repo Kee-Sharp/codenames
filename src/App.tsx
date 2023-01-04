@@ -57,7 +57,7 @@ function App({
   onLeave,
   bigScreen,
 }: AppProps) {
-  const { cards, players = [], turn, winner, scoreMap } = roomState;
+  const { cards, players = [], turn, winner, scoreMap = {} } = roomState;
   const { roomId = "" } = useParams();
   const dispatch = (payload: Payloads, id = roomId) => dispatchWithRoomId(payload, id);
   const navigate = useNavigate();
