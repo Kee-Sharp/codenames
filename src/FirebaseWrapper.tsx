@@ -32,7 +32,7 @@ const database = getDatabase(app);
 const dbRef = ref(database);
 
 const FirebaseWrapper = () => {
-  const [roomState, setRoomState] = useState(() => init([]));
+  const [roomState, setRoomState] = useState(() => init({ blankCards: true }));
   const navigate = useNavigate();
   const unsubscribeRef = useRef<Function | null>(null);
   const clientId = generateClientId();
@@ -52,7 +52,7 @@ const FirebaseWrapper = () => {
   };
 
   const createRoom = async () => {
-    const newRoomKey = push(child(dbRef, "rooms"), init([])).key;
+    const newRoomKey = push(child(dbRef, "rooms"), init()).key;
     if (!newRoomKey) return;
     navigate(newRoomKey);
   };
@@ -77,7 +77,7 @@ const FirebaseWrapper = () => {
     setRoomState(newState);
     const unsubscribe = onValue(roomRef, (snapshot) => {
       const data = snapshot.val() as AppState | null;
-      setRoomState(data ?? init([]));
+      setRoomState(data ?? init({ blankCards: true }));
     });
     unsubscribeRef.current = unsubscribe;
   };

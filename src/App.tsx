@@ -12,7 +12,7 @@ import Typography from "@mui/material/Typography";
 import _ from "lodash";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import type { Payloads } from "./appReducer";
+import { Payloads, serializeTeams } from "./appReducer";
 import Board from "./Board";
 import Teams from "./Teams";
 
@@ -35,6 +35,8 @@ export interface AppState {
   players: IPlayer[];
   turn: TTeam;
   winner: TTeam | "";
+  /** Maps each team to a map of the other teams and the current team's wins against them */
+  scoreMap: Record<string, Record<string, number>>;
 }
 interface AppProps {
   clientId: string;
@@ -55,7 +57,7 @@ function App({
   onLeave,
   bigScreen,
 }: AppProps) {
-  const { cards, players = [], turn, winner } = roomState;
+  const { cards, players = [], turn, winner, scoreMap } = roomState;
   const { roomId = "" } = useParams();
   const dispatch = (payload: Payloads, id = roomId) => dispatchWithRoomId(payload, id);
   const navigate = useNavigate();
@@ -98,6 +100,10 @@ function App({
     (total, { team, revealed }) => (team === "blue" && !revealed ? total + 1 : total),
     0
   );
+
+  const [redTeam, blueTeam] = serializeTeams(players);
+  const redTeamScore = scoreMap[redTeam]?.[blueTeam] ?? 0;
+  const blueTeamScore = scoreMap[blueTeam]?.[redTeam] ?? 0;
 
   const handleChangePlayer = (newValues: Partial<IPlayer>) => {
     dispatch({ type: "changePlayer", payload: { newValues, currentPlayer } });
@@ -164,6 +170,17 @@ function App({
           <Typography color="white" fontWeight="bold">
             Teams
           </Typography>
+          {redTeamScore + blueTeamScore > 0 && (
+            <div style={{ display: "flex", width: "100%", marginTop: -24 }}>
+              <Typography sx={{ flex: 1, color: "error.main", textAlign: "center" }}>
+                {redTeamScore}
+              </Typography>
+              <Typography sx={{ flex: 1, color: "primary.main", textAlign: "center" }}>
+                {blueTeamScore}
+              </Typography>
+            </div>
+          )}
+
           <Teams
             players={players}
             clientId={clientId}

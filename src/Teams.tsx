@@ -65,6 +65,9 @@ const Teams = ({ onRandomizeTeams, onChangeNickname, ...rest }: TeamsProps) => {
             <OutlinedInput
               inputRef={inputRef}
               value={nickname}
+              onBlur={(event) => {
+                if (!event.relatedTarget) setIsChangingNickname(false);
+              }}
               onChange={(e) => setNickname(e.target.value)}
               onKeyUp={(e) => {
                 if (e.key === "Enter") submitNickname();

@@ -3,10 +3,15 @@ import { Reducer } from "react";
 import type { AppState, IPlayer, TTeam } from "./App";
 import allWords from "./words.json";
 
-export const init = (players: IPlayer[]): AppState => {
-  // not sure how this switches between games but making it a variable so it's
-  // easy to change later
-  const isRedFirst = true;
+interface InitArgs {
+  players?: IPlayer[];
+  blankCards?: boolean;
+  scoreMap?: AppState["scoreMap"];
+}
+
+export const init = (initArgs: InitArgs = {}): AppState => {
+  const { players = [], blankCards = false, scoreMap = { blank: { map: 0 } } } = initArgs;
+  const isRedFirst = Math.random() < 0.5;
   let shuffled = _.shuffle(allWords);
   const numRedCards = isRedFirst ? 9 : 8;
   const redWords = _.take(shuffled, numRedCards);
@@ -27,11 +32,25 @@ export const init = (players: IPlayer[]): AppState => {
       }))
   );
   return {
-    cards: _.shuffle(cards),
+    cards: blankCards
+      ? cards.map(() => ({ team: "none", title: "", revealed: false }))
+      : _.shuffle(cards),
     players,
-    turn: "red",
+    turn: isRedFirst ? "red" : "blue",
     winner: "",
+    scoreMap,
   };
+};
+
+export const serializeTeams = (players: IPlayer[]) => {
+  const teams = _.partition(
+    [...players].sort((a, b) => a.id.localeCompare(b.id)),
+    ({ team }) => team === "red"
+  );
+  return teams.map((team) => team.map(({ id }) => id).join(",") || "empty_team") as [
+    string,
+    string
+  ];
 };
 
 type PayloadAction<T extends string, P = undefined> = P extends undefined
@@ -70,7 +89,7 @@ const reducer: Reducer<AppState, Payloads> = (state, action) => {
       return { ...state, players: newPlayers };
     }
     case "clickCard": {
-      const { cards, winner, turn } = state;
+      const { cards, players, winner, turn, scoreMap } = state;
       const { index, currentPlayer } = action.payload;
       if (winner || currentPlayer.team !== turn || currentPlayer.role === "spymaster")
         return state;
@@ -87,13 +106,38 @@ const reducer: Reducer<AppState, Payloads> = (state, action) => {
       let newTurn = turn;
       let newWinner: AppState["winner"] = winner;
       const { team: cardTeam } = cards[index];
+      // set winner if there is one
       if (cardTeam === "bomb") newWinner = turn === "red" ? "blue" : "red";
       else if (remainingRed === 0) newWinner = "red";
       else if (remainingBlue === 0) newWinner = "blue";
+      // change turn if necessary
       if (!newWinner && cardTeam !== currentPlayer.team) {
         newTurn = turn === "red" ? "blue" : "red";
       }
-      return { ...state, cards: newCards, winner: newWinner, turn: newTurn };
+      // update team scores
+      let newScoreMap = _.cloneDeep(scoreMap);
+      const [redTeam, blueTeam] = serializeTeams(players);
+      if (newWinner === "red") {
+        newScoreMap[redTeam] = {
+          ...scoreMap[redTeam],
+          [blueTeam]: (scoreMap[redTeam]?.[blueTeam] ?? 0) + 1,
+        };
+      } else if (newWinner === "blue") {
+        newScoreMap[blueTeam] = {
+          ...scoreMap[blueTeam],
+          [redTeam]: (scoreMap[blueTeam]?.[redTeam] ?? 0) + 1,
+        };
+      }
+      if (newWinner && "blank" in scoreMap) {
+        delete newScoreMap["blank"];
+      }
+      return {
+        ...state,
+        cards: newCards,
+        winner: newWinner,
+        turn: newTurn,
+        scoreMap: newScoreMap,
+      };
     }
     case "endTurn": {
       const { turn, winner } = state;
@@ -133,7 +177,10 @@ const reducer: Reducer<AppState, Payloads> = (state, action) => {
       return { ...state, players: newPlayers };
     }
     case "reset": {
-      return init(state.players.map((player) => ({ ...player, role: "guesser" })));
+      return init({
+        players: state.players.map((player) => ({ ...player, role: "guesser" })),
+        scoreMap: state.scoreMap,
+      });
     }
     default:
       return state;
