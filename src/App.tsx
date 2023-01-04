@@ -57,7 +57,7 @@ function App({
   onLeave,
   bigScreen,
 }: AppProps) {
-  const { cards, players = [], turn, winner, scoreMap = {} } = roomState;
+  const { cards, players = [], turn, winner, scoreMap } = roomState;
   const { roomId = "" } = useParams();
   const dispatch = (payload: Payloads, id = roomId) => dispatchWithRoomId(payload, id);
   const navigate = useNavigate();
@@ -102,8 +102,8 @@ function App({
   );
 
   const [redTeam, blueTeam] = serializeTeams(players);
-  const redTeamScore = scoreMap[redTeam]?.[blueTeam] ?? 0;
-  const blueTeamScore = scoreMap[blueTeam]?.[redTeam] ?? 0;
+  const redTeamScore = scoreMap?.[redTeam]?.[blueTeam] ?? 0;
+  const blueTeamScore = scoreMap?.[blueTeam]?.[redTeam] ?? 0;
 
   const handleChangePlayer = (newValues: Partial<IPlayer>) => {
     dispatch({ type: "changePlayer", payload: { newValues, currentPlayer } });
